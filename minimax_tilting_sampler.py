@@ -53,14 +53,14 @@ class TruncatedMVN:
             raise RuntimeError("Dimensions D of mean (mu), covariance matric (cov), lower bound (lb) "
                                "and upper bound (ub) must be the same!")
 
-        self.cov = cov
-        self.orig_mu = mu
-        self.orig_lb = lb
-        self.orig_ub = ub
+        self.cov = cov.copy()
+        self.orig_mu = mu.copy()
+        self.orig_lb = lb.copy()
+        self.orig_ub = ub.copy()
         
         # permutated
-        self.lb = lb - mu  # move distr./bounds to have zero mean
-        self.ub = ub - mu  # move distr./bounds to have zero mean
+        self.lb = self.orig_lb - self.orig_mu  # move distr./bounds to have zero mean
+        self.ub = self.orig_ub - self.orig_mu  # move distr./bounds to have zero mean
         if np.any(self.ub <= self.lb):
             raise RuntimeError("Upper bound (ub) must be strictly greater than lower bound (lb) for all D dimensions!")
 
@@ -143,7 +143,7 @@ class TruncatedMVN:
         x0 = np.zeros(2 * (self.dim - 1))
 
         # find optimal tilting parameter non-linear equation solver
-        sol = optimize.root(gradpsi, x0, args=(self.L, self.lb, self.ub), method='hybr', jac=True)
+        sol = optimize.root(gradpsi, x0, args=(self.L, self.lb, self.ub), method='hybr', jac=True, options = {"maxfev": 10000})
         if not sol.success:
             print('Warning: Method may fail as covariance matrix is close to singular!')
         self.x = sol.x[:self.dim - 1]
